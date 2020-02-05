@@ -1,3 +1,9 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 ## Altibase-Cluster-Monitoring-System
 Altibase Cluster Monitoring System is a graphical monitoring system for ALTIBASE.
 
@@ -15,15 +21,19 @@ Image repository: https://hub.docker.com/repository/docker/altibaseams/altiams
 > docker run --name influxDB_WITH_Grafana -d -p 8086:8086 -p 8083:8083 -p 3000:3000 -p 4000:4000 altibaseams/altiams
 ```
 ### 2.telegraf 수행
-#### telegraf 수정(Monitoring 할 장비에서 telegraf 정보를 수정 합니다.)
-github에서 download 받았던 source 안에 telegraf 정보를 맞춰서 수정합니다.
-https://github.com/ALTIBASE/Altibase-Cluster-Monitoring-System/tree/master/telegraf
+장비에서 미리 ODBC를 세팅 해야 합니다.
+
+http://docs.altibase.com/pages/viewpage.action?pageId=11698380
+#### Monitoring 할 장비에서 telegraf 소스를 download
 ```
+> git clone https://github.com/ALTIBASE/Altibase-Cluster-Monitoring-System.git
+```
+#### telegraf 소스를 수정
+```
+telegraf Directory에 들어 가서 각 정보를 맞춰서 수정합니다.
+
 확인 해야 할 부분이 다음과 같습니다. 
 influxdb uri, altibase uri,port 맞춰서 수정 하면 됩니다. 
-
-장비에서 미리 ODBC를 세팅 해야 합니다.
-http://docs.altibase.com/pages/viewpage.action?pageId=11698380
  
 a. telegraf.conf
 [[outputs.influxdb]] urls = ["http://127.0.0.1:8086"] =>http://ipinfluxdb:portinfluxdb
@@ -56,7 +66,7 @@ myport = flag.String("myport", "43019", "altibase port")
 ```
 #### telegraf 수행
 ```
-> telegraf -config telegraf.conf
+> nohup telegraf -config telegraf.conf &
 ```
 ### 3.grafana web접속
 ```
@@ -68,12 +78,15 @@ grafana graph 마다 hostname 확인 합니다.
 telegraf.conf에서 세팅 해던 hostname로 수정해야 그 장비의 정보가 나옵니다.
 ```
 ## Shell Script install
+수행하기전에 jq 세팅 하세요.  /usr/bin밑에서 저장하면 됩니다.
+
 ### 1.check out shell script 
 ```
 > git clone https://github.com/ALTIBASE/Altibase-Cluster-Monitoring-System.git
 ```
 ### 2.run shell script
 ```
+crateDashboard Directory에 들어 가서 root권한으로 수행 합니다.
 a. Redhat
 > sh influxdbgrafana_redhat.run [--ipgrafana=IP] [--portgrafana=PORT] [--ipinfluxdb=IP] [--portinfluxdb=PORT] [--help]
  
@@ -91,7 +104,6 @@ b. Ubuntu
 #--portinfluxdb=PORT   If no --portinfluxdb option is given, the default value is 8086        #   
 ###############################################################################################
 ```
-
 ### 3.telegraf 수행
 "Shell Script install" 2번 telegraf 수행 참고.
 ### 4.grafana web접속
