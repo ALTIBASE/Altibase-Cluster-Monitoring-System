@@ -99,6 +99,6 @@ b. Ubuntu
 ###############################################################################################
 ```
 ### 3.telegraf 수행
-"Shell Script install" 2번 telegraf 수행 참고.
+"Docker image install" 2번 telegraf 수행 참고.
 ### 4.grafana web접속
-"Shell Script install" 3번 grafana web접속 참고.
+"Docker image install" 3번 grafana web접속 참고.
