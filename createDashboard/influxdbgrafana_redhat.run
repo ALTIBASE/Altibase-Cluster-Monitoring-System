@@ -1,0 +1,72 @@
+
+#!/bin/bash
+ 
+#default ip,port
+G_IP="127.0.0.1"
+G_PORT="3000"
+I_IP="127.0.0.1"
+I_PORT="8086"
+ 
+#get option value
+if ! options=$(getopt -o h -l help,ipgrafana:,portgrafana:,ipinfluxdb:,portinfluxdb: -- "$@")
+then
+    echo "ERROR: invalid option"
+    echo "[OPTION]"
+    echo "--ipgrafana=IP        If no --ipgrafana option is given, the default value is 127.0.0.1"
+    echo "--portgrafana=PORT    If no --portgrafana option is given, the default value is 3000"
+    echo "--ipinfluxdb=IP       If no --ipinfluxdb option is given, the default value is 127.0.0.1"
+    echo "--portinfluxdb=PORT   If no --portinfluxdb option is given, the default value is 8086"
+    exit 1
+fi
+eval set -- "$options"
+while true; do
+    case "$1" in
+        -h|--help)
+            echo "--ipgrafana=IP        If no --ipgrafana option is given, the default value is 127.0.0.1"
+            echo "--portgrafana=PORT    If no --portgrafana option is given, the default value is 3000"
+            echo "--ipinfluxdb=IP       If no --ipinfluxdb option is given, the default value is 127.0.0.1"
+            echo "--portinfluxdb=PORT   If no --portinfluxdb option is given, the default value is 8086"
+            shift ;;
+        --ipgrafana)
+            echo >&2 "$1 was setted!, grafana ip is: $2"
+            G_IP=`echo $2`
+            shift 2 ;;
+        --portgrafana)
+            echo >&2 "$1 was setted!, grafana port is: $2"
+            G_PORT=`echo $2`
+            shift 2 ;;
+        --ipinfluxdb)
+            echo >&2 "$1 was setted!, influxdb ip is: $2"
+            I_IP=`echo $2`
+            shift 2 ;;
+        --portinfluxdb)
+            echo >&2 "$1 was setted!, influxdb port is: $2"
+            I_PORT=`echo $2`
+            shift 2 ;;
+        --)
+            shift
+            break
+    esac
+done
+ 
+#influxdb, grafana uninstall
+service grafana-server stop
+service influxdb stop
+
+yum remove grafana
+yum remove influxdb
+
+#os ¹öû install, service start ¾ÈµkÉ¼ö½4ϴÙ ±׷¸¸éö¸·Îinstall Ç¾ßÇ´ϴÙ
+# influxdb install 
+yum install influxdb-1.7.9.x86_64.rpm
+ 
+# grafana install 
+yum install grafana-6.4.4-1.x86_64.rpm
+ 
+#start up
+service grafana-server start
+service influxdb start
+ 
+#grafana setting
+#ipgrafana,portgrafana,ipinfluxdb,portinfluxdb À·Â°ªÀ ¾ø default °ª8·Îµé°£´Ù
+sh import.sh $G_IP $G_PORT $I_IP $I_PORT

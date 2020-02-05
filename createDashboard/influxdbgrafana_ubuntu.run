@@ -1,0 +1,71 @@
+#!/bin/bash
+ 
+ 
+#default ip,port
+G_IP="127.0.0.1"
+G_PORT="3000"
+I_IP="127.0.0.1"
+I_PORT="8086"
+ 
+#get option value
+if ! options=$(getopt -o h -l help,ipgrafana:,portgrafana:,ipinfluxdb:,portinfluxdb: -- "$@")
+then
+    echo "ERROR: invalid option"
+    echo "[OPTION]"
+    echo "--ipgrafana=IP        If no --ipgrafana option is given, the default value is 127.0.0.1"
+    echo "--portgrafana=PORT    If no --portgrafana option is given, the default value is 3000"
+    echo "--ipinfluxdb=IP       If no --ipinfluxdb option is given, the default value is 127.0.0.1"
+    echo "--portinfluxdb=PORT   If no --portinfluxdb option is given, the default value is 8086"
+    exit 1
+fi
+eval set -- "$options"
+while true; do
+    case "$1" in
+        -h|--help)
+            echo "--ipgrafana=IP        If no --ipgrafana option is given, the default value is 127.0.0.1"
+            echo "--portgrafana=PORT    If no --portgrafana option is given, the default value is 3000"
+            echo "--ipinfluxdb=IP       If no --ipinfluxdb option is given, the default value is 127.0.0.1"
+            echo "--portinfluxdb=PORT   If no --portinfluxdb option is given, the default value is 8086"
+            shift ;;
+        --ipgrafana)
+            echo >&2 "$1 was setted!, grafana ip is: $2"
+            G_IP=`echo $2`
+            shift 2 ;;
+        --portgrafana)
+            echo >&2 "$1 was setted!, grafana port is: $2"
+            G_PORT=`echo $2`
+            shift 2 ;;
+        --ipinfluxdb)
+            echo >&2 "$1 was setted!, influxdb ip is: $2"
+            I_IP=`echo $2`
+            shift 2 ;;
+        --portinfluxdb)
+            echo >&2 "$1 was setted!, influxdb port is: $2"
+            I_PORT=`echo $2`
+            shift 2 ;;
+        --)
+            shift
+            break
+    esac
+done
+ 
+#influxdb, grafana uninstall
+service grafana-server stop
+service influxdb stop
+
+dpkg -P influxdb
+dpkg -P grafana
+
+#os ¹öû install, service start ¾ÈµÉ¼ö½4ϴÙ ±׷¸¸éö¸·Îinstall Ç¾ßÇ´ϴÙ
+# influxdb install
+dpkg -i influxdb_1.7.9_amd64.deb
+ 
+# grafana install 
+dpkg -i grafana_6.5.2_amd64.deb
+ 
+#start up
+service grafana-server start
+service influxdb start
+ 
+#grafana setting
+sh import.sh $G_IP $G_PORT $I_IP $I_PORT
