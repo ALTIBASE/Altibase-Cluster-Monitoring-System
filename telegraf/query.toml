@@ -1,0 +1,529 @@
+
+title="Altibase Monitoring Elements"
+
+[[monitor_query]]
+series_name ="altibase_basic_info"
+tags=[]
+fields=["DB_NAME","PRODUCT_VERSION", "STARTUP_PHASE", "NLS_CHARACTERSET", "LOG_MODE", "DB_UP_TIME"]
+pivot=false
+enable=true
+sql="""
+select
+             d.db_name
+            ,v.PRODUCT_VERSION
+            ,i.STARTUP_PHASE
+            ,n.NLS_CHARACTERSET
+            ,decode(a.ARCHIVE_MODE,1,'Archive log', 'No archive log') as LOG_MODE 
+            ,decode(i.STARTUP_TIME_SEC, 0, '0', to_char( to_date('1970010109','YYYYMMDDHH') +   i.STARTUP_TIME_SEC/ (60*60*24), 'YYYY/MM/DD HH:MI:SS' ) ) as DB_UP_TIME
+from  v$database d
+     ,v$version  v
+     ,v$instance i
+     ,( select NLS_CHARACTERSET
+        from  v$nls_parameters
+        limit 1
+      ) n
+     , v$archive a
+"""
+
+
+[[monitor_query]]
+series_name ="altibase_mem_stat"
+tags=[]
+fields=["MEM_MAX_SIZE", "ALLOC_DB_SIZE", "MEM_USED_RATIO", "BUFFER_SIZE"]
+pivot=false
+enable=true
+sql="""
+ select
+             MEM_MAX_DB_SIZE
+           ,(MEM_ALLOC_PAGE_COUNT * 32 * 1024) as  ALLOC_DB_SIZE
+           ,((MEM_ALLOC_PAGE_COUNT * 32 * 1024) / MEM_MAX_DB_SIZE )  * 100.00 AS MEM_USED_RATIO
+           ,(SELECT  POOL_SIZE * PAGE_SIZE  FROM V$BUFFPOOL_STAT ) AS BUFFER_SIZE
+ from
+          v$database
+"""
+
+[[monitor_query]]
+series_name ="altibase_buffhit_stat"
+tags=[]
+fields=["HIT_RATIO"]
+pivot=false
+enable=true
+sql="""
+  select
+          (GET_PAGES + FIX_PAGES - READ_PAGES) / ( GET_PAGES + FIX_PAGES) * 100.00 as HIT_RATIO
+  from   V$BUFFPOOL_STAT
+ """ 
+
+[[monitor_query]]
+series_name ="altibase_session_stat"
+tags=[]
+fields=["CURRENT_SESSION_CNT", "EXEC_SESSION_CNT", "MAX_CLIENT_CNT", "STATEMENT_CNT"]
+pivot=false
+enable=true
+sql="""
+  select
+       ( select count(*)  from v$session )                               as CURRENT_SESSION_CNT
+      ,( select count(*)  from v$session  where task_state='EXECUTING' ) as EXEC_SESSION_CNT
+      ,( select to_number(value1)    from v$property where name = 'MAX_CLIENT'    ) as MAX_CLIENT_CNT
+      ,( select count(*)  from v$statement)                             as STATEMENT_CNT
+  from dual
+"""
+
+[[monitor_query]]
+series_name ="altibase_plancache_stat"
+tags=[]
+fields=["MAX_CACHE_SIZE", "CURRENT_CACHE_SIZE", "CACHE_MISS_COUNT", "CACHE_MISS_RATIO"]
+pivot=false
+enable=true
+sql="""
+ select
+       MAX_CACHE_SIZE
+      ,CURRENT_CACHE_SIZE
+      ,CACHE_MISS_COUNT
+      ,100.00 -  ( CACHE_MISS_COUNT/(CACHE_HIT_COUNT+CACHE_MISS_COUNT) * 100.00 )  AS CACHE_MISS_RATIO
+ from V$SQL_PLAN_CACHE
+"""
+
+[[monitor_query]]
+series_name ="altibase_srv_stat"
+tags=[]
+fields=["CNT"]
+pivot_key = "STATE"
+pivot=true
+enable=true
+sql="""
+     SELECT 
+            STATE
+          , COUNT(*) AS CNT
+    FROM V$SERVICE_THREAD
+    GROUP BY STATE
+UNION ALL
+      SELECT 
+           'TOTAL' AS STATE
+           ,COUNT(*)
+      FROM V$SERVICE_THREAD        
+UNION ALL
+      SELECT
+           RUN_MODE AS STATE
+          ,COUNT(*)
+      FROM V$SERVICE_THREAD
+      GROUP BY RUN_MODE   
+"""
+[[monitor_query]]
+series_name ="alti_tx_count"
+tags=["TX_STATUS"]
+fields=["TRANSACTION_CNT"]
+pivot=false
+pivot_key=""
+enable=true
+sql="""
+  select
+             decode(tx.STATUS,0,'BEGIN', 3, 'COMMIT', 4, 'ROLLBACK', 5, 'BLOCKED', 6, 'END', 'UNKNOWN' ) AS TX_STATUS
+           , count(*)   as TRANSACTION_CNT
+  from   v$TRANSACTION tx
+  group by  tx.STATUS
+union all 
+  select
+           'TOTAL' AS TX_STATUS
+           , ( select count(*) from v$transaction tx ) AS TRANSACTION_CNT
+   from dual
+"""
+
+[[monitor_query]]
+series_name ="alti_userss_count"
+tags=["DB_USERNAME"]
+fields=["SESSION_CNT", "STMT_CNT"]
+pivot=false
+enable=false
+sql="""
+  select   ss.DB_USERNAME
+            , count(*) AS SESSION_CNT
+            , nvl(sum(stmt_cnt),0)  AS STMT_CNT
+  from v$session ss left outer join 
+      (
+          select           
+                       session_id
+                     , count(*)  as stmt_cnt
+          from v$statement
+          group by session_id
+      )  st    on  ss.id = st.session_id
+  group by db_username    
+"""
+
+[[monitor_query]]
+series_name ="alti_locktable_stat"
+tags=["LOCK_ITEM_TYPE","LOCK_DESC"]
+fields=["LOCK_CNT"]
+pivot=false
+enable=true
+sql="""
+    select 
+                    decode(vlock.LOCK_ITEM_TYPE, NULL, 'Abnormal', 'TBS', 'TableSpace', 'TBL', 'Table', 'DBF', 'DataFile', 'UNKNOWN' ) AS LOCK_ITEM_TYPE
+                  , vlock.LOCK_DESC as LOCK_DESC
+                  , count(*)   AS LOCK_CNT
+    from      v$lock vlock
+    group  by    LOCK_ITEM_TYPE,     LOCK_DESC   
+""" 
+
+
+[[monitor_query]]
+series_name ="alti_sysstat"
+tags=["NAME"]
+fields=["VALUE"]
+pivot=false
+enable=true
+sql="""
+       select    *
+       from
+       (        
+                    select NAME, VALUE  from v$sysstat where name not like '%time: %'  and  seqnum not in ( 29, 30, 31 )
+           union all       
+                    select    'execute success count : insert' as NAME
+                             , (   select  sum ( value ) from  v$sysstat where seqnum in ( 29, 33 ) ) as VALUE
+                    from dual 
+           union all       
+                    select    'execute success count : update' as NAME
+                             , (   select  sum ( value ) from  v$sysstat where seqnum in ( 30, 34 ) ) as VALUE
+                    from dual 
+           union all       
+                    select    'execute success count : delete' as NAME
+                             , (   select  sum ( value ) from  v$sysstat where seqnum in ( 31, 35 ) )  as VALUE
+                    from dual 
+           union all
+                    select NAME, VALUE from v$sysstat where seqnum in   ( 61, 62, 63, 64, 65, 66 , 92 )                     
+        )
+        order by 1
+"""
+
+            
+[[monitor_query]]
+series_name ="alti_tbsfileIO_stat"
+tags=["TBS_NAME"]
+fields=["PHYSICALREADS", "PHYSICALWRITE", "READ_PERCENT", "WRITE_PERCENT", "TOTAL_IO_PERCENT", "AVGTIME"]
+pivot=false
+enable=true
+sql="""
+ select
+             ts.TBS_NAME
+            ,PHYRDS            as  PHYSICALREADS
+            ,PHYWRTS          as  PHYSICALWRITE
+            ,round((ts.PHYRDS/tot.rds)*100, 1)   as   READ_PERCENT
+            ,round((ts.PHYWRTS/decode(tot.wrts, 0, 1, tot.wrts))*100, 1)  as WRITE_PERCENT
+            ,round((ts.phyrds + ts.phywrts)/(tot.rds+tot.wrts)*100, 1)  as TOTAL_IO_PERCENT
+            ,ts.avgtime
+  from
+  (  
+         select
+               ts.name  as tbs_name
+              ,sum(fs.PHYRDS)         as PHYRDS
+              ,sum(fs.PHYWRTS)      as PHYWRTS
+              ,round( avg(fs.avgiotim) /1000, 3 )         as avgtime
+        from v$datafiles   df  
+             , v$filestat    fs  
+            , v$tablespaces ts
+        where df.id     = fs.FILEID
+          and  df.SPACEID = fs.SPACEID
+          and  df.SPACEID = ts.id
+      group by ts.name
+ )  ts  ,  ( select sum(PHYRDS) rds, sum(PHYWRTS) wrts from V$FILESTAT ) tot 
+"""
+
+[[monitor_query]]
+series_name ="alti_tbs_usage"
+tags=[ "TBS_TYPE", "TBS_NAME"]
+fields=["MAX_SIZE", "TOTAL_SIZE", "ALLOC_SIZE", "USED_SIZE", "USAGE_PERCENT", "STATE"]
+pivot=false
+enable=true
+sql="""
+          SELECT DECODE(TYPE, 3, 'SYSTEM TABLESPACE', 
+                                                4, 'USER DATA TABLESPACE', 
+                                                5, 'SYSTEM TABLESPACE', 
+                                                6, 'USER TEMP TABLESPACE', 
+                                                7, 'SYSTEM TABLESPACE')       AS TBS_TYPE
+                           , NAME                                             AS TBS_NAME   
+                           , (D.MAX * PAGE_SIZE)                              AS MAX_SIZE
+                           , TOTAL_PAGE_COUNT * PAGE_SIZE                     AS TOTAL_SIZE
+                           , DECODE(TYPE, 7,   U.TOTAL_EXT_CNT*PROP.EXTENT_SIZE  
+                                                       ,   ALLOCATED_PAGE_COUNT * PAGE_SIZE )    AS ALLOC_SIZE
+                           , DECODE(TYPE, 3, NVL(DS.USED, 0), 
+                                                     4,  NVL(DS.USED, 0), 
+                                                     7,  (U.TX_EXT_CNT+U.USED_EXT_CNT+U.UNSTEALABLE_EXT_CNT) * PROP.EXTENT_SIZE
+                                                      ,  0)                                  AS    USED_SIZE
+                           , DECODE(TYPE, 7,    (((U.TX_EXT_CNT+U.USED_EXT_CNT+U.UNSTEALABLE_EXT_CNT) * PROP.EXTENT_SIZE)/(D.MAX*PAGE_SIZE))*100 ,
+                                                      3,  NVL(DS.USED, 0)/(D.MAX*PAGE_SIZE)* 100 ,
+                                                      4,  NVL(DS.USED, 0)/(D.MAX*PAGE_SIZE)* 100, 
+                                                        (ALLOCATED_PAGE_COUNT/D.MAX) * 100 )       AS USAGE_PERCENT
+                           , DECODE(STATE, 1, 'OFFLINE', 2, 'ONLINE', 5, 'OFFLINE BACKUP', 6, 'ONLINE BACKUP', 128, 'DROPPED', 'DISCARDED')    AS  STATE 
+                           , D.AUTOEXTEND
+            FROM V$TABLESPACES T LEFT OUTER JOIN(SELECT SPACE_ID , SUM(TOTAL_USED_SIZE) USED
+                                                   FROM X$SEGMENT
+                                                  GROUP BY SPACE_ID) DS ON DS.SPACE_ID = T.ID
+               , (SELECT SPACEID
+                       , SUM(DECODE(MAXSIZE, 0, CURRSIZE, MAXSIZE)) AS MAX 
+                       , DECODE(MAX(AUTOEXTEND), 1, 'ON', 'OFF') 'AUTOEXTEND'
+                    FROM V$DATAFILES
+                   GROUP BY SPACEID ) D 
+               , V$DISK_UNDO_USAGE U
+               , (SELECT VALUE1 EXTENT_SIZE
+                    FROM V$PROPERTY
+                   WHERE NAME = 'SYS_UNDO_TBS_EXTENT_SIZE') PROP
+           WHERE T.ID = D.SPACEID 
+UNION  ALL
+          SELECT 
+                       DECODE(TYPE, 0, 'MEMORY_DICTIONARY', 1, 'MEMORY_SYS_DATA', 2, 'MEMORY_USER_DATA', 8, 'VOLATILE_USER_DATA')     AS TBS_TYPE
+                     , NAME    AS  TBS_NAME
+                     , DECODE(M.MAXSIZE, 140737488322560, D.MEM_MAX_DB_SIZE , 0 , T.TOTAL_PAGE_COUNT * T.PAGE_SIZE, M.MAXSIZE)    AS MAX_SIZE
+                     , M.ALLOC_PAGE_COUNT * T.PAGE_SIZE                                                         AS TOTAL_SIZE
+                     ,NVL( M.ALLOC_PAGE_COUNT-M.FREE_PAGE_COUNT,T.TOTAL_PAGE_COUNT)*PAGE_SIZE     AS  ALLOC_SIZE
+                     , NVL(MT.USED, 0)                                                                                   AS  USED_SIZE 
+                     , DECODE(MAXSIZE, 140737488322560, (M.ALLOC_PAGE_COUNT-M.FREE_PAGE_COUNT)*T.PAGE_SIZE/ D.MEM_MAX_DB_SIZE ,
+                                    0, (M.ALLOC_PAGE_COUNT-M.FREE_PAGE_COUNT) / T.TOTAL_PAGE_COUNT , (M.ALLOC_PAGE_COUNT-M.FREE_PAGE_COUNT) * T.PAGE_SIZE/ M.MAXSIZE) * 100   AS USAGE_PERCENT
+                     , DECODE(T.STATE,1,'OFFLINE',2,'ONLINE',5,'OFFLINE BACKUP',6,'ONLINE BACKUP',128,'DROPPED', 'DISCARDED')   AS  STATE
+                     , DECODE(M.AUTOEXTEND_MODE,1,'ON','OFF')     AS AUTOEXTEND
+            FROM V$DATABASE D
+               , V$TABLESPACES T
+               , (SELECT SPACE_ID
+                       , SPACE_NAME
+                       , ALLOC_PAGE_COUNT
+                       , FREE_PAGE_COUNT
+                       , DECODE(MAX_SIZE, 0, (SELECT VALUE1 FROM V$PROPERTY WHERE NAME = 'VOLATILE_MAX_DB_SIZE'), MAX_SIZE) AS MAXSIZE
+                       , AUTOEXTEND_MODE
+                    FROM V$VOL_TABLESPACES
+                   UNION
+                  SELECT SPACE_ID
+                       , SPACE_NAME
+                       , ALLOC_PAGE_COUNT
+                       , FREE_PAGE_COUNT
+                       , MAXSIZE
+                       , AUTOEXTEND_MODE
+                    FROM V$MEM_TABLESPACES ) M LEFT OUTER JOIN(SELECT TABLESPACE_ID,   SUM( FIXED_USED_MEM + VAR_USED_MEM )   USED
+                    FROM V$MEMTBL_INFO
+                   GROUP BY TABLESPACE_ID ) MT ON M.SPACE_ID = MT.TABLESPACE_ID
+           WHERE T.ID = M.SPACE_ID;
+"""
+
+[[monitor_query]]
+series_name ="alti_lockobj_list"
+tags=["LOCK_ITEM_TYPE"]
+fields=[ "SID", "DB_USERNAME", "TBS_NAME", "TABLE_NAME", "LOCK_DESC"]
+pivot=false
+enable=true
+sql="""
+   select decode(LOCK_ITEM_TYPE, NULL, 'Abnormal', 'TBS', 'TableSpace', 'TBL', 'Table', 'DBF', 'DataFile', 'UNKNOWN' ) AS LOCK_ITEM_TYPE
+       , vss.id            AS SID
+       , vss.DB_USERNAME   AS DB_USERNAME
+       , vts.name             AS TBS_NAME
+       , tbl.table_name    AS TABLE_NAME
+       , vlock.LOCK_DESC   AS LOCK_DESC
+ from
+       v$lock vlock
+       left   outer join system_.sys_tables_ tbl
+              on vlock.table_oid  = tbl.table_oid
+       left outer join v$tablespaces vts
+              on vlock.tbs_id     = vts.id
+       left outer join ( select
+                                 session_id
+                               , tx_id
+                         from v$statement
+                         group by session_id , tx_id
+                       )  vst
+              on vlock.TRANS_ID = vst.TX_ID
+       left outer join v$session   vss
+              on vst.SESSION_ID = vss.id
+  where vlock.LOCK_ITEM_TYPE = 'TBL'
+  limit 10              
+"""
+
+
+[[monitor_query]]
+series_name ="alti_top10sql_list"
+tags=[]
+fields=["USERNAME", "ELAPEXEC_SEC", "ELAPSED_TIME","EXECUTIONS", "GETS_EXEC", "CLIENT" ,"STMT_ID", "QUERY"]
+pivot=false
+enable=true
+sql="""
+select
+             ss.DB_USERNAME    as USERNAME
+          ,  st.total_time /(st.EXECUTE_SUCCESS + st.EXECUTE_FAILURE )/1000000.0             as ELAPEXEC_SEC
+          ,  st.total_time/1000000.0                                                           as ELAPSED_TIME
+          ,  (st.EXECUTE_SUCCESS + st.EXECUTE_FAILURE )                                      as EXECUTIONS
+          , lpad( round(st.GET_PAGE/(st.EXECUTE_SUCCESS + st.EXECUTE_FAILURE ),3), 15, ' ' ) as GETS_EXEC
+          , decode(ss.CLIENT_APP_INFO,'', CLIENT_TYPE , ss.CLIENT_APP_INFO )                 as CLIENT
+          , st.id                                                                            as STMT_ID
+          , replace2( substring(ltrim(query), 1, 80), chr(10), '')   as QUERY
+from
+         V$STATEMENT st
+      ,  V$SESSION   ss
+where
+      st.SESSION_ID  =  ss.ID
+  and st.total_time >= 5
+  and (st.EXECUTE_SUCCESS + st.EXECUTE_FAILURE ) > 0
+  and st.EXECUTE_FLAG = 1 
+order by 2 desc
+limit 10           
+"""
+
+[[monitor_query]]
+series_name ="alti_longrunsql_count"
+tags=[]
+fields=["SQL_COUNT"]
+pivot=false
+enable=true
+sql="""
+select
+          count(*)  AS  SQL_COUNT
+from
+         V$STATEMENT st
+where
+         st.total_time /1000000 >= 5
+  and (st.EXECUTE_SUCCESS + st.EXECUTE_FAILURE ) > 0
+  and st.EXECUTE_FLAG = 1 
+"""
+
+
+[[monitor_query]]
+series_name ="alti_undobuff_stat"
+tags=[]
+fields=["READ_PAGE_COUNT", "GET_PAGE_COUNT", "FIX_PAGE_COUNT", "CREATE_PAGE_COUNT", "HIT_RATIO"]
+pivot=false
+enable=true
+sql="""
+  select
+             sum( READ_PAGE_COUNT ) AS READ_PAGE_COUNT
+            ,sum( GET_PAGE_COUNT ) AS GET_PAGE_COUNT
+            ,sum(  FIX_PAGE_COUNT ) as FIX_PAGE_COUNT
+            ,sum( CREATE_PAGE_COUNT ) as CREATE_PAGE_COUNT
+            , avg(HIT_RATIO ) as  HIT_RATIO
+  from  V$UNDO_BUFF_STAT    
+  where HIT_RATIO > 0 
+"""
+
+[[monitor_query]]
+series_name ="alti_repgap_stat"
+tags=["REP_NAME"]
+fields=["REP_GAP", "REP_LAST_SN", "REP_SN"]
+pivot=false
+enable=true
+sql="""
+select 
+         REP_NAME
+      ,  REP_GAP
+      ,  REP_LAST_SN
+      ,  REP_SN
+from V$REPGAP                
+"""
+
+[[monitor_query]]
+series_name ="alti_repsender_stat"
+tags=["REP_NAME"]
+fields=["PARALLEL_ID", "READ_LOG_FROM_REPLBUFFER", "READ_LOG_FROM_FILE", "SEND_XLOG", "RECV_ACK"]
+pivot=false
+enable=true
+sql="""
+select
+      REP_NAME
+     ,  PARALLEL_ID
+     , READ_LOG_FROM_REPLBUFFER
+     , READ_LOG_FROM_FILE
+     , SEND_XLOG
+     , RECV_ACK
+from  V$REPSENDER_STATISTICS               
+"""
+
+[[monitor_query]]
+series_name ="alti_repsender_info"
+tags=["REP_NAME"]
+fields=["START_MODE", "NET_ERROR", "XSN", "COMMIT_XSN", "STATUS", "READ_LOG_COUNT","SEND_LOG_COUNT","REPL_MODE","ACT_REPL_MODE"]
+pivot=false
+enable=true
+sql="""
+select
+      s.REP_NAME
+     ,  decode(s.START_FLAG, 0, 'NORMAL', 1, 'QUICK', 2, 'SYNC', 
+                                 3, 'SYNC_ONLY', 4, 'SYNC_RUN', 5, 'SYNC_END', 
+                                 6, 'RECOVERY from Replication', 7, 'OFFLINE', 8, 'PARALLEL') AS START_MODE
+     , decode( s.NET_ERROR_FLAG, 0, 'NO error', 'Network Error') AS  NET_ERROR
+     , s.XSN
+     ,s.COMMIT_XSN
+     ,decode(s.STATUS, 0, 'STOP', 1, 'RUN', 2, 'RETRY',
+                          3,'FAILBACK NORMAL', 4, 'FAILBACK MASTER', 5, 'FAILBACK SLAVE',
+                          6, 'SYNC',7, 'FAILBACK EAGER', 8, 'FAILBACK FLUSH', 9, 'IDLE' )  AS STATUS
+    , s.READ_LOG_COUNT
+    , s.SEND_LOG_COUNT
+    , s.REPL_MODE
+    , s.ACT_REPL_MODE
+from V$REPSENDER s              
+"""
+
+
+[[monitor_query]]
+series_name ="alti_repsender_tblog_stat"
+tags=["REP_NAME","TABLE_NAME"]
+fields=["TABLE_OID","INSERT_LOG_COUNT", "DELETE_LOG_COUNT", "UPDATE_LOG_COUNT", "LOB_LOG_COUNT"]
+pivot=false
+enable=true
+sql="""
+select
+        r.REP_NAME                    
+      , r.TABLE_OID
+      , t.TABLE_NAME
+      , r.INSERT_LOG_COUNT
+      , r.DELETE_LOG_COUNT
+      , r.UPDATE_LOG_COUNT
+      , r.LOB_LOG_COUNT
+from V$REPSENDER_SENT_LOG_COUNT  r
+     , system_.sys_tables_   t
+where r.TABLE_OID = t.TABLE_OID                  
+"""
+
+
+[[monitor_query]]
+series_name ="alti_repsender_log_stat"
+tags=["REP_NAME"]
+fields=["INSERT_LOG_COUNT", "DELETE_LOG_COUNT", "UPDATE_LOG_COUNT", "LOB_LOG_COUNT"]
+pivot=false
+enable=true
+sql="""
+select
+        r.REP_NAME                    
+      , sum(r.INSERT_LOG_COUNT) AS INSERT_LOG_COUNT
+      , sum(r.DELETE_LOG_COUNT) AS DELETE_LOG_COUNT
+      , sum(r.UPDATE_LOG_COUNT) AS UPDATE_LOG_COUNT
+      , sum(r.LOB_LOG_COUNT)   AS LOB_LOG_COUNT
+from V$REPSENDER_SENT_LOG_COUNT  r
+group by   r.REP_NAME     
+"""
+
+[[monitor_query]]
+series_name ="alti_repsender_start_stat"
+tags=["REPLICATION_NAME"]
+fields=["REP_STATE","IS_STARTED"]
+pivot=false
+enable=true
+sql="""
+select  a.REPLICATION_NAME
+       , decode(b.rep_name, null, 'STOP', a.IS_STARTED, 0, 'STOP', 1, 'START') AS REP_STATE 
+       , decode(b.rep_name, null, 0, a.IS_STARTED ) AS IS_STARTED 
+from system_.sys_replications_ a left outer join v$repsender b
+ on a.REPLICATION_NAME = REP_NAME
+where a.XSN > -1
+"""
+
+[[monitor_query]]
+series_name ="alti_reprecv_stat"
+tags=["REPLICATION_NAME"]
+fields=["IS_STARTED","INSERT_SUCCESS_COUNT","INSERT_FAILURE_COUNT","UPDATE_SUCCESS_COUNT","UPDATE_FAILURE_COUNT","DELETE_SUCCESS_COUNT","DELETE_FAILURE_COUNT"]
+pivot=false
+enable=true
+sql="""
+select  a.REPLICATION_NAME
+       , decode(b.rep_name, null, 'STOP', 'START' ) AS IS_STARTED 
+       ,  INSERT_SUCCESS_COUNT 
+       ,  INSERT_FAILURE_COUNT 
+       ,  UPDATE_SUCCESS_COUNT
+       , UPDATE_FAILURE_COUNT
+       , DELETE_SUCCESS_COUNT
+       , DELETE_FAILURE_COUNT 
+from system_.sys_replications_ a left outer join V$REPRECEIVER   b
+ on a.REPLICATION_NAME = REP_NAME 
+"""    
