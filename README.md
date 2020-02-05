@@ -6,8 +6,8 @@ It was built with using only open sources such as InfluxDB, Telegraf, Grafana.
 ## 패키지 수행 방법
 1.Pull docker image 
 
-2.Run install shell script 
-## Docker image install
+2.Run shell script 
+## Docker image
 ### 1.AMS image를 pull합니다
 Image repository: https://hub.docker.com/repository/docker/altibaseams/altiams
 ```
@@ -71,7 +71,7 @@ http://ipgrafana:portgrafana
 grafana graph 마다 hostname 확인 합니다. 
 telegraf.conf에서 세팅 해던 hostname로 수정해야 그 장비의 정보가 나옵니다.
 ```
-## Shell Script install
+## Shell Script
 수행하기전에 jq 세팅 하세요.  /usr/bin밑에서 저장하면 됩니다.
 
 ### 1.check out shell script 
@@ -99,6 +99,6 @@ b. Ubuntu
 ###############################################################################################
 ```
 ### 3.telegraf 수행
-"Docker image install" 2번 telegraf 수행 참고.
+"Docker image" 2번 telegraf 수행 참고.
 ### 4.grafana web접속
-"Docker image install" 3번 grafana web접속 참고.
+"Docker image" 3번 grafana web접속 참고.
