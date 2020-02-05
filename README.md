@@ -1,42 +1,28 @@
 ## Altibase-Cluster-Monitoring-System
 Altibase Cluster Monitoring System is a graphical monitoring system for ALTIBASE.
+
 It was built with using only open sources such as InfluxDB, Telegraf, Grafana.
 
 ## 패키지 수행 방법
-1.Run install shell script 
-2.Pull docker image 
-
-## Shell Script install
-### 1.check out shell script 
+1.Pull docker image 
+2.Run install shell script 
+## Docker image install
+### 1.AMS image를 pull합니다
+Image repository: https://hub.docker.com/repository/docker/altibaseams/altiams
 ```
-> git clone https://github.com/lili-altibase/AMS
+> docker pull altibaseams/altiams
+> docker run --name influxDB_WITH_Grafana -d -p 8086:8086 -p 8083:8083 -p 3000:3000 -p 4000:4000 altibaseams/altiams
 ```
-### 2.run shell script
-```
-a. Redhat
-> sh influxdbgrafana_redhat.run [--ipgrafana=IP] [--portgrafana=PORT] [--ipinfluxdb=IP] [--portinfluxdb=PORT] [--help]
- 
-b. Ubuntu
-> sh influxdbgrafana_ubuntu.run [--ipgrafana=IP] [--portgrafana=PORT] [--ipinfluxdb=IP] [--portinfluxdb=PORT] [--help]
- 
-###############################################################################################
-# 1. install influxdb                                                                         #
-# 2. install grafana                                                                          #
-# 3. import dashboard                                                                         #
-#                                                                                             #
-#--ipgrafana=IP        If no --ipgrafana option is given, the default value is 127.0.0.1      # 
-#--portgrafana=PORT    If no --portgrafana option is given, the default value is 3000         #  
-#--ipinfluxdb=IP       If no --ipinfluxdb option is given, the default value is 127.0.0.1     #
-#--portinfluxdb=PORT   If no --portinfluxdb option is given, the default value is 8086        #   
-###############################################################################################
-```
-### 3.telegraf 수행
+### 2.telegraf 수행
 #### telegraf 수정(Monitoring 할 장비에서 telegraf 정보를 수정 합니다.)
 github에서 download 받았던 source 안에 telegraf 정보를 맞춰서 수정합니다.
-https://github.com/lili-altibase/AMS/tree/master/telegraf
+https://github.com/ALTIBASE/Altibase-Cluster-Monitoring-System/tree/master/telegraf
 ```
 확인 해야 할 부분이 다음과 같습니다. 
-influxdb uri, altibase uri,port 맞춰서 수정 하면 됩니다. 장비에서 미리 ODBC를 세팅 해야 합니다.http://docs.altibase.com/pages/viewpage.action?pageId=11698380
+influxdb uri, altibase uri,port 맞춰서 수정 하면 됩니다. 
+
+장비에서 미리 ODBC를 세팅 해야 합니다.
+http://docs.altibase.com/pages/viewpage.action?pageId=11698380
  
 a. telegraf.conf
 [[outputs.influxdb]] urls = ["http://127.0.0.1:8086"] =>http://ipinfluxdb:portinfluxdb
@@ -71,7 +57,7 @@ myport = flag.String("myport", "43019", "altibase port")
 ```
 > telegraf -config telegraf.conf
 ```
-### 4.grafana web접속
+### 3.grafana web접속
 ```
 http://ipgrafana:portgrafana
 ```
@@ -80,14 +66,32 @@ http://ipgrafana:portgrafana
 grafana graph 마다 hostname 확인 합니다. 
 telegraf.conf에서 세팅 해던 hostname로 수정해야 그 장비의 정보가 나옵니다.
 ```
-## Docker image install
-### 1.AMS image를 pull합니다
-Image repository: https://hub.docker.com/repository/docker/altibaseams/altiams
+## Shell Script install
+### 1.check out shell script 
 ```
-> docker pull altibaseams/altiams
-> docker run --name influxDB_WITH_Grafana -d -p 8086:8086 -p 8083:8083 -p 3000:3000 -p 4000:4000 altibaseams/altiams
+> git clone https://github.com/ALTIBASE/Altibase-Cluster-Monitoring-System.git
 ```
-### 2.telegraf 수행
-"Shell Script install" 3번 telegraf 수행 참고.
-### 3.grafana web접속
-"Shell Script install" 4번 grafana web접속 참고.
+### 2.run shell script
+```
+a. Redhat
+> sh influxdbgrafana_redhat.run [--ipgrafana=IP] [--portgrafana=PORT] [--ipinfluxdb=IP] [--portinfluxdb=PORT] [--help]
+ 
+b. Ubuntu
+> sh influxdbgrafana_ubuntu.run [--ipgrafana=IP] [--portgrafana=PORT] [--ipinfluxdb=IP] [--portinfluxdb=PORT] [--help]
+ 
+###############################################################################################
+# 1. install influxdb                                                                         #
+# 2. install grafana                                                                          #
+# 3. import dashboard                                                                         #
+#                                                                                             #
+#--ipgrafana=IP        If no --ipgrafana option is given, the default value is 127.0.0.1      # 
+#--portgrafana=PORT    If no --portgrafana option is given, the default value is 3000         #  
+#--ipinfluxdb=IP       If no --ipinfluxdb option is given, the default value is 127.0.0.1     #
+#--portinfluxdb=PORT   If no --portinfluxdb option is given, the default value is 8086        #   
+###############################################################################################
+```
+
+### 3.telegraf 수행
+"Shell Script install" 2번 telegraf 수행 참고.
+### 4.grafana web접속
+"Shell Script install" 3번 grafana web접속 참고.
