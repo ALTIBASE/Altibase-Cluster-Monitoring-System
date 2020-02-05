@@ -5,6 +5,7 @@ It was built with using only open sources such as InfluxDB, Telegraf, Grafana.
 
 ## 패키지 수행 방법
 1.Pull docker image 
+
 2.Run install shell script 
 ## Docker image install
 ### 1.AMS image를 pull합니다
