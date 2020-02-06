@@ -79,7 +79,8 @@ set jq in /usr/bin/(수행하기전에 jq 세팅 하세요.  /usr/bin밑에서 �
 ```
 ### 2.run shell script
 ```
-go to crateDashbord directory and run with root account(crateDashboard Directory에 들어 가서 root권한으로 수행 합니다.)
+go to crateDashbord directory and run with root account
+(crateDashboard Directory에 들어 가서 root권한으로 수행 합니다.)
 
 a. Redhat
 > sh influxdbgrafana_redhat.run [--ipgrafana=IP] [--portgrafana=PORT] [--ipinfluxdb=IP] [--portinfluxdb=PORT] [--help]
