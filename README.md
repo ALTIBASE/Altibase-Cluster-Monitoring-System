@@ -8,7 +8,7 @@ It is built with open sources of InfluxDB, Telegraf, and Grafana.
 
 2.Run shell script (shell 스크립트 수행)
 ## Docker image
-### 1.pull ACMS image(ACMS image를 pull 하기)
+### 1.pull ACMS image(ACMS pull 하기)
 Image repository: https://hub.docker.com/repository/docker/altibaseams/altiams
 ```
 > docker pull altibaseams/altiams
