@@ -57,8 +57,6 @@ do
     curl -X DELETE -H 'Content-Type:application/json' "$title"
 done
 
-
-#os ¹öû install, service start ¾ÈµkÉ¼ö½4ϴÙ ±׷¸¸éö¸·Îinstall Ç¾ßÇ´ϴÙ
 # influxdb install 
 yum install influxdb-1.7.9.x86_64.rpm
  
@@ -70,5 +68,4 @@ service grafana-server start
 service influxdb start
  
 #grafana setting
-#ipgrafana,portgrafana,ipinfluxdb,portinfluxdb À·Â°ªÀ ¾ø default °ª8·Îµé°£´Ù
 sh import.sh $G_IP $G_PORT $I_IP $I_PORT
