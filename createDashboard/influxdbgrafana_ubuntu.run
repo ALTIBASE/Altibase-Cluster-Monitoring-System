@@ -54,7 +54,6 @@ done
 curl -s http://admin:admin@''$G_IP'':''$G_PORT''/api/search|jq '.[].uri'|tr -d '"' |while read line
 do
     title="http://admin:admin@$G_IP:$G_PORT/api/dashboards/"$line
-    echo $title
     curl -X DELETE -H 'Content-Type:application/json' "$title"
 done
 
