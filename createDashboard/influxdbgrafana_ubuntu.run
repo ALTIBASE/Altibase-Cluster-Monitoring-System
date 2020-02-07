@@ -49,14 +49,15 @@ while true; do
     esac
 done
  
-#influxdb, grafana uninstall
-service grafana-server stop
-service influxdb stop
 
-dpkg -P influxdb
-dpkg -P grafana
+#delete old grafana, influxdb and dashboard 
+curl -s http://admin:admin@''$G_IP'':''$G_PORT''/api/search|jq '.[].uri'|tr -d '"' |while read line
+do
+    title="http://admin:admin@$G_IP:$G_PORT/api/dashboards/"$line
+    echo $title
+    curl -X DELETE -H 'Content-Type:application/json' "$title"
+done
 
-#os ¹öû install, service start ¾ÈµÉ¼ö½4ϴÙ ±׷¸¸éö¸·Îinstall Ç¾ßÇ´ϴÙ
 # influxdb install
 dpkg -i influxdb_1.7.9_amd64.deb
  
