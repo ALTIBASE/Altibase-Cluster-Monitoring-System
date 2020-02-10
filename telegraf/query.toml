@@ -527,3 +527,13 @@ select  a.REPLICATION_NAME
 from system_.sys_replications_ a left outer join V$REPRECEIVER   b
  on a.REPLICATION_NAME = REP_NAME 
 """    
+
+[[monitor_query]]
+series_name ="altibase_shardmeta_info"
+tags=[]
+fields=["SHARD_META"]
+pivot=false
+enable=true
+sql="""
+select distinct(TO_CHAR(NVL(SHARD_META_NUMBER,0))) AS SHARD_META from s$session
+"""
