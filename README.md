@@ -102,6 +102,6 @@ b. Ubuntu
 ### 3.run Telegraf(Telegraf 수행)
 see "Docker image > 2. Telegraf
 ("Docker image" 2번 telegraf 수행 참고.)
-### 4.connet Grafana Web(Grafana Web접속)
+### 4.connect Grafana Web(Grafana Web접속)
 see "Docker imange > 3. Grafana Web
 ("Docker image" 3번 grafana web접속 참고.)
