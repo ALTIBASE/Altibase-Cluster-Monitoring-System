@@ -105,3 +105,7 @@ see "Docker image > 2. Telegraf
 ### 4.connect Grafana Web(Grafana Web접속)
 see "Docker imange > 3. Grafana Web
 ("Docker image" 3번 grafana web접속 참고.)
+
+## Screenshot
+### 1.home
+![](media/home.png)
