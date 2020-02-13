@@ -109,3 +109,27 @@ see "Docker imange > 3. Grafana Web
 ## Screenshot
 ### 1.home
 ![](media/home.png)
+
+### 2.performance
+![](media/performance.png)
+
+### 3.replication
+![](media/replication.png)
+
+### 4.sharding
+![](media/sharding.png)
+
+### 5.system overview
+![](media/systemoverview.png)
+
+### 6.altibase lock statistics
+![](media/altibaselockstatistics.png)
+
+### 7.altibase space
+![](media/altibasespace.png)
+
+### 8.altibase workload
+![](media/altibaseworkload.png)
+
+### 9.altibase workload data page
+![](media/altibaseworkloaddatapage.png)
