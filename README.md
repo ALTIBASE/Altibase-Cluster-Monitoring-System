@@ -107,29 +107,29 @@ see "Docker imange > 3. Grafana Web
 ("Docker image" 3번 grafana web접속 참고.)
 
 ## Screenshot
-### 1.home
+### 1.Home
 ![](media/home.png)
 
-### 2.performance
+### 2.Performance
 ![](media/performance.png)
 
-### 3.replication
+### 3.Replication
 ![](media/replication.png)
 
-### 4.sharding
+### 4.Sharding Cluster System
 ![](media/sharding.png)
 
-### 5.system overview
+### 5.System Overview
 ![](media/systemoverview.png)
 
-### 6.altibase lock statistics
+### 6.Altibase Lock Statistics
 ![](media/altibaselockstatistics.png)
 
-### 7.altibase space
+### 7.Altibase Space
 ![](media/altibasespace.png)
 
-### 8.altibase workload
+### 8.Altibase Workload
 ![](media/altibaseworkload.png)
 
-### 9.altibase workload data page
+### 9.Altibase Workload Data Page
 ![](media/altibaseworkloaddatapage.png)
