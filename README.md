@@ -108,7 +108,7 @@ see "Docker imange > 3. Grafana Web
 ("Docker image" 3번 grafana web접속 참고.)
 
 ## Telegraf 수집하는 정보가 다음과 같습니다.
-수집 정보의 Query를 telegraf directory안에 있는 query.toml 참고 하세요.
+수집 정보의 Query를 telegraf Directory안에 있는 query.toml 참고 하세요.
 ### Altibase Info
 - alti_diskusage_mycollector
 - alti_lockobj_list
