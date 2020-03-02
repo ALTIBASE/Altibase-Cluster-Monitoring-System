@@ -67,12 +67,14 @@ http://ipgrafana:portgrafana
 #### Grafana Query 수정
 ```
 Modify hostname to Grafana Graph Query(grafana graph query마다 hostname을 확인 합니다.)
-check the host information as hostname you set in telegraf.conf
+check the host information as hostname that you set in telegraf.conf
 (telegraf.conf에서 세팅 해던 hostname로 수정해야 그 장비의 정보가 나옵니다.)
 ```
 ## Shell Script
-set jq in /usr/bin/(수행하기전에 jq 세팅 하세요.  /usr/bin밑에서 저장하면 됩니다.)
-jq수행 파일이 createDashboard Directory안에 들어 있습니다.
+set jq in /usr/bin/
+
+(수행하기전에 jq 세팅 하세요.  /usr/bin밑에서 저장하면 됩니다. jq수행 파일이 createDashboard directory안에 들어 있습니다.)
+
 
 ### 1.check out shell script 
 ```
@@ -81,7 +83,7 @@ jq수행 파일이 createDashboard Directory안에 들어 있습니다.
 ### 2.run shell script
 ```
 go to crateDashbord directory and run with root account
-(crateDashboard Directory에 들어 가서 root권한으로 수행 합니다.)
+(crateDashboard directory에 들어 가서 root권한으로 수행 합니다.)
 
 a. Redhat
 > sh influxdbgrafana_redhat.run [--ipgrafana=IP] [--portgrafana=PORT] [--ipinfluxdb=IP] [--portinfluxdb=PORT] [--help]
@@ -108,8 +110,12 @@ see "Docker imange > 3. Grafana Web
 ("Docker image" 3번 grafana web접속 참고.)
 
 ## Telegraf 수집하는 정보가 다음과 같습니다.
-telegraf Directory에 query.toml 파일이 있습니다.
-query.toml 파일에 모든 수집 정보의 query가 기록되어 있으니 참고하세요.
+There's a file, query.toml in the telegraf directory.
+(telegraf directory에 query.toml 파일이 있습니다.)
+
+All queries for data collection are specified in it.
+(query.toml 파일에 모든 수집 정보의 query가 기록되어 있으니 참고하세요.)
+
 ### Altibase Info
 - alti_diskusage_mycollector
 - alti_lockobj_list
