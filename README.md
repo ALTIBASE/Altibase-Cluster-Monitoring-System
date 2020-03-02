@@ -72,6 +72,7 @@ check the host information as hostname you set in telegraf.conf
 ```
 ## Shell Script
 set jq in /usr/bin/(수행하기전에 jq 세팅 하세요.  /usr/bin밑에서 저장하면 됩니다.)
+jq수행 파일이 createDashboard Directory안에 들어 있습니다.
 
 ### 1.check out shell script 
 ```
@@ -105,6 +106,43 @@ see "Docker image > 2. Telegraf
 ### 4.connect Grafana Web(Grafana Web접속)
 see "Docker imange > 3. Grafana Web
 ("Docker image" 3번 grafana web접속 참고.)
+
+## Telegraf 수집하는 정보가 다음과 같습니다.
+수집 정보의 Query를 telegraf directory안에 있는 query.toml 참고 하세요.
+### Altibase Info
+- alti_diskusage_mycollector
+- alti_lockobj_list
+- alti_locktable_stat
+- alti_longrunsql_count
+- alti_repgap_stat
+- alti_reprecv_stat
+- alti_repsender_info
+- alti_repsender_log_stat
+- alti_repsender_start_stat
+- alti_repsender_stat
+- alti_repsender_tblog_stat
+- alti_sysstat
+- alti_tbs_usage
+- alti_tbsfileIO_stat
+- alti_tx_count
+- alti_undobuff_stat
+- altibase_basic_info
+- altibase_buffhit_stat
+- altibase_mem_stat
+- altibase_plancache_stat
+- altibase_session_stat
+- altibase_srv_stat
+### System Info
+- cpu
+- disk
+- diskio
+- kernel
+- mem
+- net
+- processes
+- procstat
+- swap
+- system
 
 ## Screenshot
 ### 1.Home
