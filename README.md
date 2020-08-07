@@ -50,11 +50,14 @@ myport = flag.String("myport", "43019", "altibase port")
 
 
 c. altibase.go
-mysrv = flag.String("mysrv", "127.0.0.1", "altibase server ip")
-mydb = flag.String("mydb", "mydb", "altibase database name")
-myuser = flag.String("myuser", "sys", "altibase user name")
-mypass = flag.String("mypass", "manager", "altibase password")
-myport = flag.String("myport", "43019", "altibase port")
+## specify connection string
+altibase_dsn    = "Altiodbc"
+altibase_server = "127.0.0.1"
+altibase_port   = 43019
+altibase_user   = "sys"
+altibase_password = "manager"
+altibase_queryversion="V6"
+altibase_queryfile="query.toml"
 ```
 #### run Telegraf(Telegraf 수행)
 ```
